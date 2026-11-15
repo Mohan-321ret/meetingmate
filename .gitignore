@@ -1,15 +1,27 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# ==============================================================================
+# JW Meeting Assistant (.gitignore)
+# Covers Root Monorepo, Frontend (React Native Expo), and Backend (FastAPI Python)
+# ==============================================================================
 
-# dependencies
+# Node / Frontend Dependencies
 node_modules/
+frontend/node_modules/
+package-lock.json.backup
 
-# Expo
+# Expo & Metro
 .expo/
+frontend/.expo/
 dist/
 web-build/
 expo-env.d.ts
+frontend/expo-env.d.ts
+.metro-health-check*
 
-# Native
+# React Native Native Builds (Continuous Native Generation - CNG)
+/ios
+/android
+frontend/ios
+frontend/android
 .kotlin/
 *.orig.*
 *.jks
@@ -18,26 +30,46 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
-# Metro
-.metro-health-check*
+# Python & Backend Virtual Environments
+.venv/
+backend/.venv/
+venv/
+env/
+__pycache__/
+backend/**/__pycache__/
+*.py[cod]
+*$py.class
 
-# debug
+# Pytest & Coverage
+.pytest_cache/
+backend/.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Databases & Dynamic Runtime Storage
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
+backend/data/chroma/
+!backend/data/.gitkeep
+
+# Environment & Secret Configuration Files
+.env
+backend/.env
+.env*.local
+!.env.example
+!.env.production.example
+!backend/.env.example
+!backend/.env.production.example
+
+# IDE, OS & System Metadata
+.DS_Store
+Thumbs.db
+*.pem
+*.tsbuildinfo
+.vscode/
+.idea/
+.claude/
 npm-debug.*
 yarn-debug.*
 yarn-error.*
-
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
-
-example
-
-# generated native folders
-/ios
-/android

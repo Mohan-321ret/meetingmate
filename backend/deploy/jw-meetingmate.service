@@ -1,0 +1,40 @@
+[Unit]
+Description=JW Meeting Assistant FastAPI Backend Service
+After=network.target tailscaled.service
+Wants=tailscaled.service
+
+[Service]
+Type=simple
+User=meetingmate
+Group=meetingmate
+WorkingDirectory=/opt/jw-meetingmate/backend
+EnvironmentFile=/opt/jw-meetingmate/backend/.env
+
+# Execute Gunicorn with Uvicorn workers for production concurrency
+ExecStart=/opt/jw-meetingmate/backend/.venv/bin/gunicorn -c /opt/jw-meetingmate/backend/deploy/gunicorn.conf.py app.main:app
+
+# Restart policy for 24/7 family availability
+Restart=always
+RestartSec=5s
+
+# Process and resource limits
+LimitNOFILE=65535
+TimeoutStopSec=30
+
+# Hardened Linux Security Directives
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Standard output and error logging to systemd journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jw-meetingmate
+
+[Install]
+WantedBy=multi-user.target

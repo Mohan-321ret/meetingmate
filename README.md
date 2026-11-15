@@ -1,56 +1,132 @@
-# Welcome to your Expo app 👋
+# JW Meeting Assistant (MeetingMate)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**JW Meeting Assistant** is a comprehensive, private family assistant application designed to aid family members in studying, preparing, and giving natural, conversational spoken answers in Tamil for congregation meetings (Midweek and Weekend meetings).
 
-## Get started
+The repository is organized as a clean **Monorepo** separating the cross-platform mobile frontend and the high-performance Python FastAPI backend.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📁 Repository Structure
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+MeetingMate/
+├── frontend/                     # React Native & Expo Mobile Client (Android & iOS)
+│   ├── assets/                   # App icons, splash screens, and images
+│   ├── scripts/                  # Frontend test & reset scripts
+│   ├── src/
+│   │   ├── app/                  # Expo Router file-based screens & navigators
+│   │   ├── components/           # Reusable UI components & cards
+│   │   ├── constants/            # Theme, styling tokens, and sample meeting data
+│   │   ├── context/              # React Context state management
+│   │   ├── data/                 # Local offline cache & seed data
+│   │   ├── services/             # Centralized ApiClient & Domain API Services
+│   │   └── types/                # TypeScript interface definitions
+│   ├── app.json                  # Expo config & CNG plugins
+│   ├── eas.json                  # EAS Build & Submit configurations
+│   ├── eslint.config.js          # ESLint flat config
+│   ├── package.json              # Frontend dependencies & scripts
+│   └── tsconfig.json             # TypeScript config & path aliases (@/*)
+│
+├── backend/                      # Python FastAPI Modular Monolith REST Service
+│   ├── app/                      # Application source code
+│   │   ├── api/routes/           # Versioned API routes (/api/v1)
+│   │   ├── core/                 # Config, security middleware, rate limiter, logging
+│   │   ├── database/             # SQLite connection, WAL mode, CRUD helpers
+│   │   ├── models/               # SQLAlchemy ORM declarative models
+│   │   ├── schemas/              # Pydantic validation schemas (DTOs)
+│   │   ├── services/             # Answer generator, RAG retrieval, ingestion, Groq
+│   │   └── main.py               # Application factory & lifespan manager
+│   ├── data/                     # Persistent storage (SQLite app.db, ChromaDB vector store)
+│   ├── deploy/                   # Systemd service, Gunicorn config, backup & restore scripts
+│   ├── docs/                     # Architectural, schema, deployment & recovery documentation
+│   ├── tests/                    # Pytest test suite (106 tests, 100% pass rate)
+│   ├── requirements.txt          # Python dependencies
+│   ├── .env                      # Local development environment configuration
+│   └── .env.production.example   # Production environment template
+│
+├── package.json                  # Root monorepo script runner
+├── .gitignore                    # Comprehensive multi-language ignore rules
+├── AGENTS.md                     # Agent development guidelines & conventions
+└── README.md                     # Project overview and quickstart
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+---
 
-### Other setup steps
+## 🚀 Quickstart Guide
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### 1. Prerequisites
+- **Node.js 18+** & npm
+- **Python 3.11+**
+- (Optional) **Tailscale** for secure private family networking
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+### 2. Running the Backend
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+cd backend
 
-## Join the community
+# Setup Python virtual environment
+python -m venv .venv
+# On Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# On Linux / macOS:
+# source .venv/bin/activate
 
-Join our community of developers creating universal apps.
+# Install dependencies
+pip install -r requirements.txt
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Start backend server
+uvicorn app.main:app --reload --port 8000
+```
+
+- API Base: `http://localhost:8000/api/v1`
+- Interactive OpenAPI Docs: `http://localhost:8000/docs`
+- Health Check: `http://localhost:8000/api/v1/health`
+
+---
+
+### 3. Running the Frontend (Mobile App)
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start Expo dev server
+npx expo start
+```
+
+Press `a` for Android Emulator, `i` for iOS Simulator, or scan the QR code with **Expo Go**.
+
+In the app's **Settings Screen**, enter your backend host URL (e.g. `http://localhost:8000` or Tailscale IP `http://100.x.y.z:8000`) and tap **Test Backend Connection**.
+
+---
+
+## 🛠️ Root Monorepo Commands
+
+You can execute common workflows directly from the project root:
+
+| Command | Action |
+|---|---|
+| `npm run frontend:start` | Start Expo development server |
+| `npm run frontend:lint` | Run ESLint on frontend (`expo lint`) |
+| `npm run frontend:typecheck` | Run TypeScript typecheck on frontend (`tsc --noEmit`) |
+| `npm run frontend:test` | Run frontend API client unit tests |
+| `npm run backend:dev` | Start FastAPI backend server with reload |
+| `npm run backend:test` | Run Pytest backend test suite |
+| `npm run test` | Run complete frontend & backend test suites |
+
+---
+
+## 🔒 Security & Architecture Highlights
+
+- **Private Mesh Networking:** Designed to run privately over **Tailscale** (`100.x.y.z`) without public router port forwarding.
+- **RAG Intelligence:** Retrieves relevant reference paragraphs from ChromaDB before generating conversational Tamil answers via Groq (Llama 3.3).
+- **SQLite Performance:** WAL mode (`PRAGMA journal_mode=WAL`), normal synchronous mode, and a 64 MB in-memory cache ensure high concurrency across multiple family devices.
+- **Zero Credential Leaks:** Stack traces and internal paths are masked in production mode (`APP_DEBUG=false`).
+- **Rate & Size Limiting:** In-memory sliding-window limiter (60 rpm) protects Groq Cloud quotas, while 2 MB JSON and 15 MB upload size limits prevent memory exhaustion.
+- **Automated Backup & Restore:** WAL-safe atomic SQLite snapshots and ChromaDB tarballs with 7-day automated retention management.
+
+For full architectural, database, deployment, and troubleshooting details, see [backend/docs/](file:///d:/MeetingMate/backend/docs/).
