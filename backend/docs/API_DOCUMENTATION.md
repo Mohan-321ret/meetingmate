@@ -67,6 +67,34 @@ Returns backend health status, database connection state, and vector database re
 
 ### 3.2 Meetings (`/api/v1/meetings`)
 
+#### `POST /api/v1/meetings/sync-jw`
+Automatically fetches the current week's Midweek (*Our Christian Life and Ministry* workbook) and Weekend (*The Watchtower* study article) meetings and questions from `jw.org`, stores them in SQLite, and indexes lesson paragraphs into ChromaDB for immediate RAG answer generation.
+- **Query Parameters:**
+  - `target_date` (optional): `YYYY-MM-DD` (defaults to current date; automatically aligns to Monday-Sunday week)
+  - `language` (default: `ta`): `ta` (Tamil) | `en` (English)
+  - `force_refresh` (default: `false`): `true` to overwrite existing meeting data
+- **Response (200 OK):**
+```json
+{
+  "success": true,
+  "week_label": "நவம்பர் 16-22, 2026",
+  "target_date": "2026-11-18",
+  "midweek_meeting": { ... },
+  "weekend_meeting": { ... },
+  "total_questions_created": 15,
+  "chroma_chunks_indexed": 4,
+  "source_urls": ["https://www.jw.org/ta/library/..."],
+  "message": "Successfully synced meetings and indexed lesson chunks."
+}
+```
+
+#### `GET /api/v1/meetings/current-week`
+Retrieves active Midweek and Weekend meetings with all attached questions for the current week, automatically syncing from JW.org if not yet present in SQLite.
+- **Query Parameters:**
+  - `language` (default: `ta`): `ta` | `en`
+  - `auto_sync` (default: `true`): Boolean
+- **Response (200 OK):** Current week meetings and structured questions.
+
 #### `GET /api/v1/meetings`
 List scheduled meetings.
 - **Query Parameters:**

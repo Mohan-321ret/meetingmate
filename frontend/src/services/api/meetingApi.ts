@@ -11,6 +11,8 @@ import {
   BackendQuestion,
   BackendQuestionCreate,
   BackendQuestionUpdate,
+  BackendJWMeetingSyncResponse,
+  BackendCurrentWeekMeetingsResponse,
 } from '@/types/api';
 
 export class MeetingApiService {
@@ -24,6 +26,36 @@ export class MeetingApiService {
     limit?: number;
   }): Promise<BackendMeeting[]> {
     return apiClient.get<BackendMeeting[]>('/meetings', params);
+  }
+
+  /**
+   * Retrieves active current week meetings and questions, auto-syncing if needed.
+   */
+  async getCurrentWeekMeetings(params?: {
+    language?: 'ta' | 'en';
+    auto_sync?: boolean;
+  }): Promise<BackendCurrentWeekMeetingsResponse> {
+    return apiClient.get<BackendCurrentWeekMeetingsResponse>('/meetings/current-week', {
+      language: params?.language || 'ta',
+      auto_sync: params?.auto_sync ?? true,
+    });
+  }
+
+  /**
+   * Automatically scrapes or syncs weekly meetings and questions from jw.org.
+   */
+  async syncJWMeetings(params?: {
+    target_date?: string;
+    language?: 'ta' | 'en';
+    force_refresh?: boolean;
+  }): Promise<BackendJWMeetingSyncResponse> {
+    return apiClient.post<BackendJWMeetingSyncResponse>('/meetings/sync-jw', undefined, {
+      params: {
+        target_date: params?.target_date,
+        language: params?.language || 'ta',
+        force_refresh: params?.force_refresh ?? false,
+      },
+    });
   }
 
   /**

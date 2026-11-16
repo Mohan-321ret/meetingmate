@@ -16,9 +16,12 @@ import {
 } from '@/types';
 import {
   BackendMeeting,
+  BackendMeetingDetail,
   BackendSearchHistory,
   AnswerGenerateResponse,
   BackendSearchResponse,
+  BackendJWMeetingSyncResponse,
+  BackendCurrentWeekMeetingsResponse,
 } from '@/types/api';
 import {
   INITIAL_USER_SETTINGS,
@@ -79,6 +82,7 @@ interface AppContextValue {
   weekendData: WeekendMeetingData;
   backendMeetings: BackendMeeting[];
   refreshMeetings: () => Promise<void>;
+  syncJWMeetings: (forceRefresh?: boolean) => Promise<BackendJWMeetingSyncResponse>;
 
   // Settings
   settings: UserSettings;
@@ -198,61 +202,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Refresh meetings and questions from backend
   const refreshMeetings = useCallback(async () => {
     try {
-      const meetings = await meetingApiService.listMeetings({ limit: 20 });
+      // 1. Fetch current week meetings (auto-syncs if none exist)
+      let currentWeek: BackendCurrentWeekMeetingsResponse | undefined;
+      try {
+        currentWeek = await meetingApiService.getCurrentWeekMeetings({
+          language: 'ta',
+          auto_sync: true,
+        });
+      } catch (err) {
+        console.warn('Could not auto-sync current week meetings:', err);
+      }
+
+      const meetings = await meetingApiService.listMeetings({ limit: 50 });
       setBackendMeetings(meetings);
 
-      if (meetings && meetings.length > 0) {
-        // Find latest midweek and weekend meetings
-        const latestMidweek = meetings.find(m => m.meeting_type === 'midweek');
-        const latestWeekend = meetings.find(m => m.meeting_type === 'weekend');
+      // 2. Identify the active Midweek meeting (prioritize current week)
+      const activeMidweek =
+        currentWeek?.midweek ||
+        meetings.find(m => m.meeting_type === 'midweek');
 
-        if (latestMidweek) {
-          const detail = await meetingApiService.getMeetingById(latestMidweek.id);
-          if (detail && detail.questions && detail.questions.length > 0) {
-            registerBackendQuestions(
-              detail.questions,
-              'midweek',
-              detail.title || 'நடுவாரக் கூட்டம்'
-            );
-            setMidweekData(prev => ({
-              ...prev,
-              theme: detail.title || prev.theme,
-              weekDateRange: new Intl.DateTimeFormat('ta-IN', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              }).format(new Date(detail.meeting_date)),
-            }));
-          }
+      if (activeMidweek) {
+        const detail: BackendMeetingDetail =
+          'questions' in activeMidweek &&
+          Array.isArray((activeMidweek as any).questions) &&
+          (activeMidweek as any).questions.length > 0
+            ? (activeMidweek as BackendMeetingDetail)
+            : await meetingApiService.getMeetingById(activeMidweek.id);
+
+        if (detail && detail.questions && detail.questions.length > 0) {
+          registerBackendQuestions(
+            detail.questions,
+            'midweek',
+            detail.title || 'நடுவாரக் கூட்டம்'
+          );
         }
 
-        if (latestWeekend) {
-          const detail = await meetingApiService.getMeetingById(latestWeekend.id);
-          if (detail && detail.questions && detail.questions.length > 0) {
-            registerBackendQuestions(
-              detail.questions,
-              'weekend',
-              detail.title || 'வார இறுதி கூட்டம்'
-            );
-            setWeekendData(prev => ({
-              ...prev,
-              meetingDate: new Intl.DateTimeFormat('ta-IN', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              }).format(new Date(detail.meeting_date)),
-              watchtowerStudy: {
-                ...prev.watchtowerStudy,
-                articleTitle: detail.title || prev.watchtowerStudy.articleTitle,
-              },
-            }));
-          }
+        setMidweekData(prev => ({
+          ...prev,
+          theme: detail.title || prev.theme,
+          weekDateRange: currentWeek?.week_label || prev.weekDateRange,
+        }));
+      }
+
+      // 3. Identify the active Weekend meeting (prioritize current week)
+      const activeWeekend =
+        currentWeek?.weekend ||
+        meetings.find(m => m.meeting_type === 'weekend');
+
+      if (activeWeekend) {
+        const detail: BackendMeetingDetail =
+          'questions' in activeWeekend &&
+          Array.isArray((activeWeekend as any).questions) &&
+          (activeWeekend as any).questions.length > 0
+            ? (activeWeekend as BackendMeetingDetail)
+            : await meetingApiService.getMeetingById(activeWeekend.id);
+
+        if (detail && detail.questions && detail.questions.length > 0) {
+          registerBackendQuestions(
+            detail.questions,
+            'weekend',
+            detail.title || 'வார இறுதி கூட்டம்'
+          );
         }
+
+        const formattedDate = new Intl.DateTimeFormat('ta-IN', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }).format(new Date(detail.meeting_date));
+
+        setWeekendData(prev => ({
+          ...prev,
+          meetingDate: `${formattedDate} (ஞாயிற்றுக்கிழமை)`,
+          watchtowerStudy: {
+            ...prev.watchtowerStudy,
+            articleTitle: detail.title || prev.watchtowerStudy.articleTitle,
+          },
+        }));
       }
     } catch (err) {
       console.warn('Failed to load meetings from backend, using cached:', err);
     }
   }, []);
+
+  // Explicitly sync weekly meetings from JW.org
+  const syncJWMeetings = useCallback(
+    async (forceRefresh = false) => {
+      const result = await meetingApiService.syncJWMeetings({
+        language: 'ta',
+        force_refresh: forceRefresh,
+      });
+      await refreshMeetings();
+      return result;
+    },
+    [refreshMeetings]
+  );
 
   // Initialize storage & test backend connection
   useEffect(() => {
@@ -537,6 +581,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         weekendData,
         backendMeetings,
         refreshMeetings,
+        syncJWMeetings,
         settings,
         updateSettings,
         clearAllData,

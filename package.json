@@ -13,9 +13,9 @@
     "frontend:typecheck": "npm run typecheck --prefix frontend",
     "frontend:test": "node frontend/scripts/test-api-client.mjs",
     "backend:dev": "python -m uvicorn app.main:app --app-dir backend --reload --port 8000",
-    "backend:test": "pytest backend/tests",
+    "backend:test": "backend\\.venv\\Scripts\\pytest backend/tests",
     "lint": "npm run lint --prefix frontend",
     "typecheck": "npm run typecheck --prefix frontend",
-    "test": "npm run frontend:test && pytest backend/tests"
+    "test": "npm run frontend:test && backend\\.venv\\Scripts\\pytest backend/tests"
   }
 }

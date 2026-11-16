@@ -64,6 +64,10 @@ def list_meetings(
     return query.order_by(Meeting.meeting_date.desc()).offset(skip).limit(limit).all()
 
 
+def get_meetings_by_date(db: Session, meeting_date: date) -> List[Meeting]:
+    return list_meetings(db, meeting_date=meeting_date, limit=100)
+
+
 def update_meeting(
     db: Session, meeting_id: str, meeting_in: MeetingUpdate
 ) -> Optional[Meeting]:

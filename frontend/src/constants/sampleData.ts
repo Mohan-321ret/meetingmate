@@ -1,5 +1,60 @@
 import { MidweekMeetingData, WeekendMeetingData, SavedAnswer, UserSettings } from '@/types';
 
+// Tamil Month Names Mapping
+const TAMIL_MONTHS: Record<number, string> = {
+  0: 'ஜனவரி',
+  1: 'பிப்ரவரி',
+  2: 'மார்ச்',
+  3: 'ஏப்ரல்',
+  4: 'மே',
+  5: 'ஜூன்',
+  6: 'ஜூலை',
+  7: 'ஆகஸ்ட்',
+  8: 'செப்டம்பர்',
+  9: 'அக்டோபர்',
+  10: 'நவம்பர்',
+  11: 'டிசம்பர்',
+};
+
+/**
+ * Dynamically computes the active meeting week dates in Tamil.
+ * If today is Sunday afternoon/evening, advances to the upcoming week so users prepare for active meetings!
+ */
+export function getCurrentWeekMeetingDates(): {
+  weekDateRange: string;
+  midweekDate: string;
+  weekendMeetingDate: string;
+} {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0: Sunday, 1: Monday, ...
+  const adjustDays = (dayOfWeek === 0 && now.getHours() >= 12) ? 1 : 0;
+
+  const targetDate = new Date(now.getTime() + adjustDays * 86400000);
+  const currentDay = targetDate.getDay();
+  const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+  const monday = new Date(targetDate.getTime() + distanceToMonday * 86400000);
+  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const wednesday = new Date(monday.getTime() + 2 * 86400000);
+
+  const monMonthName = TAMIL_MONTHS[monday.getMonth()] || 'நவம்பர்';
+  const sunMonthName = TAMIL_MONTHS[sunday.getMonth()] || 'நவம்பர்';
+
+  let weekDateRange: string;
+  if (monday.getMonth() === sunday.getMonth()) {
+    weekDateRange = `${monMonthName} ${monday.getDate()}-${sunday.getDate()}, ${monday.getFullYear()}`;
+  } else {
+    weekDateRange = `${monMonthName} ${monday.getDate()} – ${sunMonthName} ${sunday.getDate()}, ${monday.getFullYear()}`;
+  }
+
+  const weekendMeetingDate = `${sunMonthName} ${sunday.getDate()}, ${sunday.getFullYear()} (ஞாயிற்றுக்கிழமை)`;
+  const midweekDate = `${TAMIL_MONTHS[wednesday.getMonth()] || 'நவம்பர்'} ${wednesday.getDate()}, ${wednesday.getFullYear()} (புதன்கிழமை)`;
+
+  return { weekDateRange, midweekDate, weekendMeetingDate };
+}
+
+const initialDates = getCurrentWeekMeetingDates();
+
 export const INITIAL_USER_SETTINGS: UserSettings = {
   theme: 'system',
   fontScale: 'normal',
@@ -11,7 +66,7 @@ export const INITIAL_USER_SETTINGS: UserSettings = {
 };
 
 export const SAMPLE_MIDWEEK_DATA: MidweekMeetingData = {
-  weekDateRange: 'மார்ச் 2-8, 2026',
+  weekDateRange: initialDates.weekDateRange,
   bibleReadingRange: 'லேவியராகமம் 1-4',
   theme: 'யெகோவாவின் பலிபீடத்திற்கு சிறந்ததை கொண்டுவாருங்கள்',
   openingSong: {
@@ -114,7 +169,7 @@ export const SAMPLE_MIDWEEK_DATA: MidweekMeetingData = {
 };
 
 export const SAMPLE_WEEKEND_DATA: WeekendMeetingData = {
-  meetingDate: 'மார்ச் 8, 2026 (ஞாயிற்றுக்கிழமை)',
+  meetingDate: initialDates.weekendMeetingDate,
   publicTalk: {
     song: {
       number: 22,

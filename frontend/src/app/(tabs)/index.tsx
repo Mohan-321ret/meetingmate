@@ -35,6 +35,7 @@ export default function HomeScreen() {
     addAnswer,
     isBackendOnline,
     refreshMeetings,
+    syncJWMeetings,
     syncSavedAnswers,
     askIndependentQuestion,
   } = useApp();
@@ -42,12 +43,32 @@ export default function HomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalPrefill, setModalPrefill] = useState<Partial<SavedAnswer> | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSyncingJW, setIsSyncingJW] = useState(false);
 
   // Independent question asking state
   const [independentQuery, setIndependentQuery] = useState('');
   const [independentType, setIndependentType] = useState<'short' | 'detailed'>('short');
   const [isAskingIndependent, setIsAskingIndependent] = useState(false);
   const [independentResult, setIndependentResult] = useState<AnswerGenerateResponse | null>(null);
+
+  const handleSyncJW = async (forceRefresh = true) => {
+    setIsSyncingJW(true);
+    try {
+      const res = await syncJWMeetings(forceRefresh);
+      Alert.alert(
+        'வெற்றி',
+        `${res.week_label} கூட்டங்கள் மற்றும் கேள்விகள் JW.org-லிருந்து வெற்றிகரமாக புதுப்பிக்கப்பட்டன.\n\nசேர்க்கப்பட்ட கேள்விகள்: ${res.total_questions_created}\nபதிவேற்றப்பட்ட பாடப் பகுதிகள்: ${res.chroma_chunks_indexed}`
+      );
+    } catch (err: any) {
+      Alert.alert(
+        'புதுப்பிப்பதில் பிழை',
+        err.tamilMessage ||
+          'JW.org-லிருந்து கூட்டங்களை எடுக்க முடியவில்லை. இணைய இணைப்பு அல்லது சர்வரை சரிபார்க்கவும்.'
+      );
+    } finally {
+      setIsSyncingJW(false);
+    }
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -263,6 +284,50 @@ export default function HomeScreen() {
                 })
               }
               style={{ flex: 1, marginLeft: Spacing.sm }}
+            />
+          </View>
+        </AppCard>
+
+        {/* JW.org Automatic Scraper Sync Banner */}
+        <AppCard variant="outlined" padding="md" style={styles.syncJwCard}>
+          <View style={styles.syncJwRow}>
+            <View
+              style={[
+                styles.syncJwIconBg,
+                { backgroundColor: colors.primarySurface },
+              ]}>
+              <Ionicons
+                name="cloud-download-outline"
+                size={20}
+                color={colors.primary}
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <Text
+                style={[
+                  Typography.h3,
+                  { color: colors.text, fontSize: 13 * fontScaleMultiplier },
+                ]}>
+                JW.org வாராந்திர கூட்டங்கள்
+              </Text>
+              <Text
+                style={[
+                  Typography.caption,
+                  {
+                    color: colors.textSecondary,
+                    fontSize: 11 * fontScaleMultiplier,
+                  },
+                ]}>
+                {midweekData.weekDateRange ||
+                  'இந்த வாரப் பாடங்கள் & கேள்விகள்'}
+              </Text>
+            </View>
+            <AppButton
+              title={isSyncingJW ? '...' : 'புதுப்பி'}
+              variant="outline"
+              size="sm"
+              loading={isSyncingJW}
+              onPress={() => handleSyncJW(true)}
             />
           </View>
         </AppCard>
@@ -818,7 +883,22 @@ const styles = StyleSheet.create({
   nextMeetingCard: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  syncJwCard: {
+    marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+  },
+  syncJwRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  syncJwIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroTopRow: {
     flexDirection: 'row',

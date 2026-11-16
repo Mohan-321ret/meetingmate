@@ -56,3 +56,29 @@ class MeetingDetailResponse(MeetingResponse):
     questions: List[QuestionResponse] = Field(default_factory=list, description="Questions belonging to this meeting")
 
     model_config = {"from_attributes": True}
+
+
+class JWMeetingSyncResponse(BaseModel):
+    """
+    Response schema after syncing weekly meetings from JW.org.
+    """
+    success: bool = True
+    week_label: str
+    target_date: str
+    midweek_meeting: Optional[MeetingResponse] = None
+    weekend_meeting: Optional[MeetingResponse] = None
+    total_questions_created: int = 0
+    chroma_chunks_indexed: int = 0
+    source_urls: List[str] = Field(default_factory=list)
+    message: str
+
+
+class CurrentWeekMeetingsResponse(BaseModel):
+    """
+    Response schema returning active current week meetings.
+    """
+    week_label: str
+    start_date: str
+    end_date: str
+    midweek: Optional[MeetingDetailResponse] = None
+    weekend: Optional[MeetingDetailResponse] = None

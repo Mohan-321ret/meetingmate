@@ -57,6 +57,26 @@ export interface BackendMeetingDetail extends BackendMeeting {
   questions: BackendQuestion[];
 }
 
+export interface BackendJWMeetingSyncResponse {
+  success: boolean;
+  week_label: string;
+  target_date: string;
+  midweek_meeting?: BackendMeeting | null;
+  weekend_meeting?: BackendMeeting | null;
+  total_questions_created: number;
+  chroma_chunks_indexed: number;
+  source_urls: string[];
+  message: string;
+}
+
+export interface BackendCurrentWeekMeetingsResponse {
+  week_label: string;
+  start_date: string;
+  end_date: string;
+  midweek?: BackendMeetingDetail | null;
+  weekend?: BackendMeetingDetail | null;
+}
+
 // ----------------------------------------------------------------------------
 // Questions
 // ----------------------------------------------------------------------------

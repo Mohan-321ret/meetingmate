@@ -12,6 +12,8 @@ from app.core.config import settings
 
 # Configure test environment
 settings.APP_ENV = "testing"
+test_db_path = BACKEND_DIR / "data" / "test.db"
+settings.DATABASE_URL = f"sqlite:///{test_db_path.as_posix()}"
 
 from app.main import app
 
